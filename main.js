@@ -162,8 +162,8 @@ class PerlinVisualizer {
         
         // Use the same size for both canvases for consistency
         const containerWidth = Math.min(perlinWidth, gameWidth);
-        const maxSize = Math.min(containerWidth, 400);
-        const minSize = 200; // Minimum size for mobile
+        const maxSize = Math.min(containerWidth, 450); // Increased from 400
+        const minSize = 220; // Increased from 200 for mobile
         const size = Math.max(minSize, maxSize);
         
         // Set canvas size with device pixel ratio for sharp rendering
@@ -175,17 +175,19 @@ class PerlinVisualizer {
         this.gameCanvas.style.width = `${size}px`;
         this.gameCanvas.style.height = `${size}px`;
         
-        // Set actual pixel dimensions
-        this.canvas.width = size * dpr;
-        this.canvas.height = size * dpr;
-        this.gameCanvas.width = size * dpr;
-        this.gameCanvas.height = size * dpr;
+        // Set actual pixel dimensions for crisp rendering
+        // Use a grid-friendly size that's divisible by the grid size
+        const pixelSize = Math.floor(size * dpr / this.gridSize) * this.gridSize;
+        this.canvas.width = pixelSize;
+        this.canvas.height = pixelSize;
+        this.gameCanvas.width = pixelSize;
+        this.gameCanvas.height = pixelSize;
         
         // Scale context to match device pixel ratio
         this.ctx.scale(dpr, dpr);
         this.gameCtx.scale(dpr, dpr);
         
-        this.cellSize = size / this.gridSize;
+        this.cellSize = pixelSize / this.gridSize;
     }
 
     setupTouchHandling() {

@@ -46,14 +46,17 @@ body {
 
 .preview-container {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
     margin-bottom: 1rem;
     flex-wrap: wrap; /* Allow wrapping on small screens */
+    justify-content: center;
+    align-items: stretch;
 }
 
 .canvas-container, .game-preview {
     flex: 1;
-    min-width: 300px; /* Minimum width before wrapping */
+    min-width: 280px; /* Reduced from 300px */
+    max-width: 450px; /* Added max-width */
     background-color: var(--secondary-color);
     padding: 1rem;
     border-radius: 4px;
@@ -63,7 +66,9 @@ body {
     justify-content: center;
     box-sizing: border-box;
     position: relative;
-    min-height: 300px; /* Ensure consistent height */
+    min-height: 280px; /* Reduced from 300px */
+    margin-bottom: 0.5rem; /* Added margin bottom */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add subtle shadow */
 }
 
 .game-preview {
@@ -75,9 +80,11 @@ body {
     margin-bottom: 0.75rem;
     font-size: 1rem;
     position: absolute;
-    top: 1rem;
+    top: 0.75rem;
     left: 1rem;
     width: auto;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 canvas {
@@ -89,6 +96,8 @@ canvas {
     display: block;
     box-sizing: border-box;
     margin: 0 auto;
+    aspect-ratio: 1 / 1; /* Maintain square aspect ratio */
+    width: 100%; /* Take full width of container */
 }
 
 .canvas-container canvas, .game-preview canvas {
@@ -96,6 +105,9 @@ canvas {
     margin: 0 auto;
     max-width: 100%;
     box-sizing: border-box;
+    image-rendering: pixelated; /* Crisp pixel rendering */
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
 
 .controls {
@@ -288,12 +300,18 @@ button:hover {
     .preview-container {
         flex-direction: column;
         gap: 0.75rem;
+        align-items: center;
     }
     
     .canvas-container, .game-preview {
         min-width: 100%;
+        max-width: 100%;
         padding: 0.75rem;
         min-height: 250px;
+    }
+    
+    canvas {
+        max-height: 80vw; /* Limit height on mobile */
     }
     
     .game-preview {
