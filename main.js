@@ -134,11 +134,17 @@ class PerlinNoise {
     }
 }
 
+// Canvas setup
+const perlinCanvas = document.getElementById('perlinCanvas');
+const gameCanvas = document.getElementById('gameCanvas');
+const perlinCtx = perlinCanvas.getContext('2d');
+const gameCtx = gameCanvas.getContext('2d');
+
 class PerlinVisualizer {
     constructor() {
-        this.canvas = document.getElementById('perlinCanvas');
+        this.perlinCanvas = document.getElementById('perlinCanvas');
         this.gameCanvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
+        this.perlinCtx = this.perlinCanvas.getContext('2d');
         this.gameCtx = this.gameCanvas.getContext('2d');
         
         this.perlin = new PerlinNoise();
@@ -152,51 +158,37 @@ class PerlinVisualizer {
     }
 
     setupCanvas() {
-        // Get the actual container width after all CSS has been applied
-        const perlinContainer = this.canvas.parentElement;
-        const gameContainer = this.gameCanvas.parentElement;
-        
-        // Account for padding and get the available space
-        const perlinWidth = perlinContainer.clientWidth - 32; // 16px padding on each side
-        const gameWidth = gameContainer.clientWidth - 32;
-        
-        // Use the same size for both canvases for consistency
-        const containerWidth = Math.min(perlinWidth, gameWidth);
-        const maxSize = Math.min(containerWidth, 450); // Increased from 400
-        const minSize = 220; // Increased from 200 for mobile
-        const size = Math.max(minSize, maxSize);
-        
         // Set canvas size with device pixel ratio for sharp rendering
         const dpr = window.devicePixelRatio || 1;
         
-        // Set logical size (CSS size)
-        this.canvas.style.width = `${size}px`;
-        this.canvas.style.height = `${size}px`;
-        this.gameCanvas.style.width = `${size}px`;
-        this.gameCanvas.style.height = `${size}px`;
+        // Get container dimensions
+        const perlinContainer = this.perlinCanvas.parentElement;
+        const gameContainer = this.gameCanvas.parentElement;
         
-        // Set actual pixel dimensions for crisp rendering
-        // Use a grid-friendly size that's divisible by the grid size
-        const pixelSize = Math.floor(size * dpr / this.gridSize) * this.gridSize;
-        this.canvas.width = pixelSize;
-        this.canvas.height = pixelSize;
-        this.gameCanvas.width = pixelSize;
-        this.gameCanvas.height = pixelSize;
+        // Set logical size (CSS size)
+        const perlinWidth = perlinContainer.clientWidth;
+        const gameWidth = gameContainer.clientWidth;
+        
+        this.perlinCanvas.width = perlinWidth * dpr;
+        this.perlinCanvas.height = 250 * dpr;
+        this.gameCanvas.width = gameWidth * dpr;
+        this.gameCanvas.height = 250 * dpr;
         
         // Scale context to match device pixel ratio
-        this.ctx.scale(dpr, dpr);
+        this.perlinCtx.scale(dpr, dpr);
         this.gameCtx.scale(dpr, dpr);
         
-        this.cellSize = pixelSize / this.gridSize;
+        // Calculate cell size based on grid size
+        this.cellSize = Math.min(perlinWidth, this.perlinCanvas.height) / this.gridSize;
     }
 
     setupTouchHandling() {
         // Prevent default touch behaviors
-        this.canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+        this.perlinCanvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
         this.gameCanvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
         
         // Add touch event listeners for both canvases
-        [this.canvas, this.gameCanvas].forEach(canvas => {
+        [this.perlinCanvas, this.gameCanvas].forEach(canvas => {
             canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
             canvas.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
         });
@@ -288,6 +280,10 @@ class PerlinVisualizer {
     }
 
     generate(newSeed = false) {
+        // Add loading state
+        const canvasContainer = document.querySelector('.canvas-container');
+        canvasContainer.classList.add('loading');
+        
         // Only generate a new seed if explicitly requested
         if (newSeed) {
             this.perlin.seed(this.currentSeed);
@@ -320,16 +316,24 @@ class PerlinVisualizer {
         }
 
         this.draw();
+        
+        // Remove loading state
+        setTimeout(() => {
+            canvasContainer.classList.remove('loading');
+        }, 100);
     }
 
     draw() {
         // Clear both canvases
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.perlinCtx.clearRect(0, 0, this.perlinCanvas.width, this.perlinCanvas.height);
         this.gameCtx.clearRect(0, 0, this.gameCanvas.width, this.gameCanvas.height);
 
         // Calculate cell size based on canvas dimensions
-        const cellWidth = this.canvas.width / this.gridSize;
-        const cellHeight = this.canvas.height / this.gridSize;
+        const perlinCellWidth = this.perlinCanvas.width / this.gridSize / (window.devicePixelRatio || 1);
+        const perlinCellHeight = this.perlinCanvas.height / this.gridSize / (window.devicePixelRatio || 1);
+        
+        const gameCellWidth = this.gameCanvas.width / this.gridSize / (window.devicePixelRatio || 1);
+        const gameCellHeight = this.gameCanvas.height / this.gridSize / (window.devicePixelRatio || 1);
 
         // Draw Perlin noise grid
         for (let y = 0; y < this.gridSize; y++) {
@@ -359,27 +363,27 @@ class PerlinVisualizer {
                 }
                 
                 // Draw cell on the noise canvas
-                this.ctx.fillStyle = color;
-                this.ctx.fillRect(
-                    x * cellWidth,
-                    y * cellHeight,
-                    cellWidth,
-                    cellHeight
+                this.perlinCtx.fillStyle = color;
+                this.perlinCtx.fillRect(
+                    x * perlinCellWidth,
+                    y * perlinCellHeight,
+                    perlinCellWidth,
+                    perlinCellHeight
                 );
             }
         }
 
         // Draw game-level visualization with perspective
         const perspective = 0.7;
-        const wallHeight = cellHeight * 2;
-        const floorColor = '#2a2a2a';
+        const wallHeight = gameCellHeight * 2;
+        const floorColor = '#1a1a1a';
         const wallColor = '#1a1a1a';
         const highlightColor = 'rgba(255, 255, 255, 0.1)';
         const shadowColor = 'rgba(0, 0, 0, 0.3)';
 
         // Draw floor
         this.gameCtx.fillStyle = floorColor;
-        this.gameCtx.fillRect(0, 0, this.gameCanvas.width, this.gameCanvas.height);
+        this.gameCtx.fillRect(0, 0, this.gameCanvas.width / (window.devicePixelRatio || 1), this.gameCanvas.height / (window.devicePixelRatio || 1));
 
         // Draw walls and floor tiles
         for (let y = 0; y < this.gridSize; y++) {
@@ -388,8 +392,8 @@ class PerlinVisualizer {
                 const normalizedValue = (value + 1) / 2;
                 const isSolid = normalizedValue < (0.5 + this.threshold);
                 
-                const screenX = x * cellWidth;
-                const screenY = y * cellHeight;
+                const screenX = x * gameCellWidth;
+                const screenY = y * gameCellHeight;
 
                 if (isSolid) {
                     // Calculate wall color based on depth
@@ -404,7 +408,7 @@ class PerlinVisualizer {
                     this.gameCtx.fillRect(
                         screenX,
                         screenY - wallHeight * perspective,
-                        cellWidth,
+                        gameCellWidth,
                         wallHeight
                     );
 
@@ -413,7 +417,7 @@ class PerlinVisualizer {
                     this.gameCtx.fillRect(
                         screenX,
                         screenY - wallHeight * perspective,
-                        cellWidth,
+                        gameCellWidth,
                         2
                     );
                     this.gameCtx.fillRect(
@@ -426,7 +430,7 @@ class PerlinVisualizer {
                     // Add wall shadows
                     this.gameCtx.fillStyle = shadowColor;
                     this.gameCtx.fillRect(
-                        screenX + cellWidth - 2,
+                        screenX + gameCellWidth - 2,
                         screenY - wallHeight * perspective,
                         2,
                         wallHeight
@@ -434,7 +438,7 @@ class PerlinVisualizer {
                     this.gameCtx.fillRect(
                         screenX,
                         screenY - wallHeight * perspective + wallHeight - 2,
-                        cellWidth,
+                        gameCellWidth,
                         2
                     );
                 }
@@ -447,25 +451,28 @@ class PerlinVisualizer {
                 this.gameCtx.fillRect(
                     screenX,
                     screenY,
-                    cellWidth,
-                    cellHeight
+                    gameCellWidth,
+                    gameCellHeight
                 );
             }
         }
 
         // Add ambient lighting effect
+        const canvasWidth = this.gameCanvas.width / (window.devicePixelRatio || 1);
+        const canvasHeight = this.gameCanvas.height / (window.devicePixelRatio || 1);
+        
         const gradient = this.gameCtx.createRadialGradient(
-            this.gameCanvas.width / 2,
-            this.gameCanvas.height / 2,
+            canvasWidth / 2,
+            canvasHeight / 2,
             0,
-            this.gameCanvas.width / 2,
-            this.gameCanvas.height / 2,
-            this.gameCanvas.width / 2
+            canvasWidth / 2,
+            canvasHeight / 2,
+            canvasWidth / 2
         );
         gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
         this.gameCtx.fillStyle = gradient;
-        this.gameCtx.fillRect(0, 0, this.gameCanvas.width, this.gameCanvas.height);
+        this.gameCtx.fillRect(0, 0, canvasWidth, canvasHeight);
     }
 }
 

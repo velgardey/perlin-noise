@@ -3,102 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive Perlin Noise Generator - Create beautiful procedural terrain patterns">
+    <meta name="theme-color" content="#1a1a1a">
     <title>Perlin Noise Generator</title>
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <div class="container">
+    <div class="container hashnode-embed">
         <div class="preview-container">
-            <div class="canvas-container">
-                <canvas id="perlinCanvas"></canvas>
+            <div class="canvas-container" aria-label="Perlin Noise Preview">
+                <canvas id="perlinCanvas" role="img" aria-label="Generated perlin noise pattern"></canvas>
             </div>
             <div class="game-preview">
                 <h3>Game Level Preview</h3>
-                <canvas id="gameCanvas"></canvas>
+                <canvas id="gameCanvas" role="img" aria-label="Game level visualization"></canvas>
             </div>
         </div>
-        <div class="controls">
+        <div class="controls" role="form" aria-label="Pattern Controls">
             <div class="control-row">
                 <div class="control-group">
                     <label for="gridSize">Size:</label>
-                    <input type="range" id="gridSize" min="20" max="100" value="40">
-                    <span id="gridSizeValue">40</span>
+                    <input type="range" id="gridSize" min="20" max="100" value="40" aria-label="Grid size">
+                    <span id="gridSizeValue" aria-live="polite">40</span>
                 </div>
                 <div class="control-group">
                     <label for="scale">Zoom:</label>
-                    <input type="range" id="scale" min="10" max="100" value="50">
-                    <span id="scaleValue">50</span>
+                    <input type="range" id="scale" min="10" max="100" value="50" aria-label="Zoom level">
+                    <span id="scaleValue" aria-live="polite">50</span>
                 </div>
             </div>
             <div class="control-row">
                 <div class="control-group">
                     <label for="octaves">Octaves:</label>
-                    <input type="range" id="octaves" min="1" max="8" value="4">
-                    <span id="octavesValue">4</span>
+                    <input type="range" id="octaves" min="1" max="8" value="4" aria-label="Noise octaves">
+                    <span id="octavesValue" aria-live="polite">4</span>
                 </div>
                 <div class="control-group">
                     <label for="persistence">Detail:</label>
-                    <input type="range" id="persistence" min="10" max="90" value="50">
-                    <span id="persistenceValue">0.5</span>
+                    <input type="range" id="persistence" min="10" max="90" value="50" aria-label="Detail level">
+                    <span id="persistenceValue" aria-live="polite">0.50</span>
                 </div>
             </div>
             <div class="control-row">
                 <div class="control-group">
                     <label for="lacunarity">Frequency:</label>
-                    <input type="range" id="lacunarity" min="10" max="30" value="20">
-                    <span id="lacunarityValue">2.0</span>
+                    <input type="range" id="lacunarity" min="10" max="30" value="20" aria-label="Frequency level">
+                    <span id="lacunarityValue" aria-live="polite">2.0</span>
                 </div>
                 <div class="control-group">
                     <label for="threshold">Water Level:</label>
-                    <input type="range" id="threshold" min="-50" max="50" value="0">
-                    <span id="thresholdValue">0.0</span>
+                    <input type="range" id="threshold" min="-50" max="50" value="0" aria-label="Water level threshold">
+                    <span id="thresholdValue" aria-live="polite">0.00</span>
                 </div>
             </div>
         </div>
         <div class="legend">
             <div class="legend-section">
-                <button class="legend-toggle" onclick="toggleLegend()">
+                <button class="legend-toggle" onclick="toggleLegend()" aria-expanded="true" aria-controls="legendContent">
                     <h3>Parameters</h3>
-                    <span class="toggle-icon">▼</span>
+                    <span class="toggle-icon" aria-hidden="true">▼</span>
                 </button>
-                <div class="legend-content" id="legendContent">
+                <div class="legend-content" id="legendContent" role="region" aria-label="Parameter descriptions">
                     <div class="legend-item">
-                        <span class="dot"></span>
+                        <span class="dot" aria-hidden="true"></span>
                         <div class="legend-content">
                             <strong>Size:</strong>
                             <p>Controls the resolution of the noise grid (number of cells). Larger sizes create more detailed terrain but may be slower to generate.</p>
                         </div>
                     </div>
                     <div class="legend-item">
-                        <span class="dot"></span>
+                        <span class="dot" aria-hidden="true"></span>
                         <div class="legend-content">
                             <strong>Zoom:</strong>
                             <p>Controls how zoomed in/out the noise pattern is. Higher values zoom in (more detailed, fine-grained patterns), while lower values zoom out (smoother, broader patterns).</p>
                         </div>
                     </div>
                     <div class="legend-item">
-                        <span class="dot"></span>
+                        <span class="dot" aria-hidden="true"></span>
                         <div class="legend-content">
                             <strong>Octaves:</strong>
                             <p>Number of layers of noise. More octaves add finer details to the base pattern, creating more natural-looking terrain.</p>
                         </div>
                     </div>
                     <div class="legend-item">
-                        <span class="dot"></span>
+                        <span class="dot" aria-hidden="true"></span>
                         <div class="legend-content">
                             <strong>Detail:</strong>
                             <p>Controls how much each octave contributes to the final result (persistence). Higher values create more detailed, rougher terrain.</p>
                         </div>
                     </div>
                     <div class="legend-item">
-                        <span class="dot"></span>
+                        <span class="dot" aria-hidden="true"></span>
                         <div class="legend-content">
                             <strong>Frequency:</strong>
                             <p>Controls how quickly the frequency increases with each octave (lacunarity). Higher values create more fine details.</p>
                         </div>
                     </div>
                     <div class="legend-item">
-                        <span class="dot"></span>
+                        <span class="dot" aria-hidden="true"></span>
                         <div class="legend-content">
                             <strong>Water Level:</strong>
                             <p>Controls the height threshold that determines what's underwater. Higher values create more water/caves, lower values create more land/islands.</p>
@@ -116,8 +118,12 @@
         function toggleLegend() {
             const content = document.getElementById('legendContent');
             const icon = document.querySelector('.toggle-icon');
-            content.style.display = content.style.display === 'none' ? 'block' : 'none';
-            icon.textContent = content.style.display === 'none' ? '▼' : '▲';
+            const button = document.querySelector('.legend-toggle');
+            const isExpanded = content.style.display !== 'none';
+            
+            content.style.display = isExpanded ? 'none' : 'block';
+            icon.textContent = isExpanded ? '▼' : '▲';
+            button.setAttribute('aria-expanded', !isExpanded);
         }
     </script>
 </body>
