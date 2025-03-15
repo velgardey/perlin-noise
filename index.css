@@ -31,7 +31,6 @@ html, body {
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
-    touch-action: manipulation; /* Improve touch behavior */
 }
 
 body {
@@ -39,14 +38,11 @@ body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.5;
-    padding: var(--spacing-sm);
-    font-size: 16px; /* Increased base font size */
+    padding: 0;
+    font-size: 16px;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .container {
@@ -56,10 +52,12 @@ body {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     padding: var(--spacing-md);
-    overflow-x: hidden;
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
+    height: 100%;
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    touch-action: pan-y; /* Allow vertical scrolling */
 }
 
 .preview-container {
@@ -112,6 +110,7 @@ canvas {
     background-color: var(--bg-primary);
     border-radius: 4px;
     border: 1px solid var(--border-color);
+    touch-action: none; /* Prevent scrolling on canvases */
 }
 
 .controls {
@@ -284,10 +283,6 @@ input[type="text"]:focus, select:focus {
 }
 
 @media (max-width: 768px) {
-    body {
-        padding: var(--spacing-sm);
-    }
-
     .container {
         padding: var(--spacing-sm);
     }
@@ -327,12 +322,10 @@ input[type="text"]:focus, select:focus {
     .canvas-container, .game-preview {
         padding: var(--spacing-sm);
         min-width: 200px;
-        touch-action: none; /* Prevent scrolling on canvas containers */
     }
 
     canvas {
         height: 200px;
-        touch-action: none; /* Prevent scrolling on canvases */
     }
 }
 

@@ -11,62 +11,66 @@
     <title>Perlin Noise Generator</title>
     <link rel="stylesheet" href="index.css">
     <style>
-        /* Critical CSS for preventing scrolling issues */
+        /* Critical CSS for embedding */
         html, body {
             position: fixed;
             overflow: hidden;
             width: 100%;
             height: 100%;
-            touch-action: manipulation;
+        }
+        
+        /* Allow scrolling within container only */
+        .container {
+            overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
     </style>
 </head>
-<body ontouchmove="event.preventDefault()">
+<body>
     <div class="container hashnode-embed">
         <div class="preview-container">
             <div class="canvas-container" aria-label="Perlin Noise Preview">
-                <canvas id="perlinCanvas" role="img" aria-label="Generated perlin noise pattern" touch-action="none"></canvas>
+                <canvas id="perlinCanvas" role="img" aria-label="Generated perlin noise pattern"></canvas>
             </div>
             <div class="game-preview">
                 <h3>Game Level Preview</h3>
-                <canvas id="gameCanvas" role="img" aria-label="Game level visualization" touch-action="none"></canvas>
+                <canvas id="gameCanvas" role="img" aria-label="Game level visualization"></canvas>
             </div>
         </div>
         <div class="controls" role="form" aria-label="Pattern Controls">
             <div class="control-row">
                 <div class="control-group">
                     <label for="gridSize">Size:</label>
-                    <input type="range" id="gridSize" min="20" max="100" value="40" aria-label="Grid size" touch-action="none">
+                    <input type="range" id="gridSize" min="20" max="100" value="40" aria-label="Grid size">
                     <span id="gridSizeValue" aria-live="polite">40</span>
                 </div>
                 <div class="control-group">
                     <label for="scale">Zoom:</label>
-                    <input type="range" id="scale" min="10" max="100" value="50" aria-label="Zoom level" touch-action="none">
+                    <input type="range" id="scale" min="10" max="100" value="50" aria-label="Zoom level">
                     <span id="scaleValue" aria-live="polite">50</span>
                 </div>
             </div>
             <div class="control-row">
                 <div class="control-group">
                     <label for="octaves">Octaves:</label>
-                    <input type="range" id="octaves" min="1" max="8" value="4" aria-label="Noise octaves" touch-action="none">
+                    <input type="range" id="octaves" min="1" max="8" value="4" aria-label="Noise octaves">
                     <span id="octavesValue" aria-live="polite">4</span>
                 </div>
                 <div class="control-group">
                     <label for="persistence">Detail:</label>
-                    <input type="range" id="persistence" min="10" max="90" value="50" aria-label="Detail level" touch-action="none">
+                    <input type="range" id="persistence" min="10" max="90" value="50" aria-label="Detail level">
                     <span id="persistenceValue" aria-live="polite">0.50</span>
                 </div>
             </div>
             <div class="control-row">
                 <div class="control-group">
                     <label for="lacunarity">Frequency:</label>
-                    <input type="range" id="lacunarity" min="10" max="30" value="20" aria-label="Frequency level" touch-action="none">
+                    <input type="range" id="lacunarity" min="10" max="30" value="20" aria-label="Frequency level">
                     <span id="lacunarityValue" aria-live="polite">2.0</span>
                 </div>
                 <div class="control-group">
                     <label for="threshold">Water Level:</label>
-                    <input type="range" id="threshold" min="-50" max="50" value="0" aria-label="Water level threshold" touch-action="none">
+                    <input type="range" id="threshold" min="-50" max="50" value="0" aria-label="Water level threshold">
                     <span id="thresholdValue" aria-live="polite">0.00</span>
                 </div>
             </div>
@@ -139,13 +143,6 @@
             icon.textContent = isExpanded ? '▼' : '▲';
             button.setAttribute('aria-expanded', !isExpanded);
         }
-        
-        // Prevent scrolling on iOS
-        document.addEventListener('touchmove', function(e) {
-            if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('container')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
     </script>
 </body>
 </html>

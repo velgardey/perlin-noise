@@ -151,8 +151,8 @@ class PerlinVisualizer {
         this.noiseGrid = [];
         this.currentSeed = Math.random() * 65536;
         
-        // Prevent scrolling on the entire document for embedded views
-        this.preventDocumentScrolling();
+        // Set up proper touch and scroll handling
+        this.setupScrollHandling();
         
         this.setupControls();
         this.setupCanvas();
@@ -160,23 +160,31 @@ class PerlinVisualizer {
         this.generate(true); // true = initialize with new seed
     }
 
-    preventDocumentScrolling() {
-        // Prevent scrolling on touch devices
-        document.addEventListener('touchmove', (e) => {
-            if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('container')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
+    setupScrollHandling() {
+        // Get the container element
+        const container = document.querySelector('.container');
         
-        // Prevent scrolling with mouse wheel
-        document.addEventListener('wheel', (e) => {
-            if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('container')) {
+        // Prevent default touch behaviors except on the container
+        document.addEventListener('touchmove', (e) => {
+            // Allow scrolling only within the container
+            if (!container.contains(e.target) || e.target.tagName === 'CANVAS' || 
+                e.target.type === 'range') {
                 e.preventDefault();
             }
         }, { passive: false });
         
         // Prevent pull-to-refresh on mobile
         document.body.style.overscrollBehavior = 'none';
+        
+        // Fix for iOS Safari to allow container scrolling
+        if (container) {
+            container.addEventListener('touchstart', (e) => {
+                // Don't prevent default on container to allow scrolling
+                if (e.target === container) {
+                    return true;
+                }
+            }, { passive: true });
+        }
     }
 
     setupCanvas() {
@@ -220,10 +228,12 @@ class PerlinVisualizer {
         rangeInputs.forEach(input => {
             input.addEventListener('touchstart', (e) => {
                 e.stopPropagation();
+                e.preventDefault();
             }, { passive: false });
             
             input.addEventListener('touchmove', (e) => {
                 e.stopPropagation();
+                e.preventDefault();
             }, { passive: false });
         });
         
@@ -283,17 +293,7 @@ class PerlinVisualizer {
                 this.generate(); // Generate on every change
             };
 
-            // Prevent text selection and scrolling during touch
-            input.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                document.body.style.overflow = 'hidden'; // Disable scrolling
-            }, { passive: false });
-            
-            input.addEventListener('touchend', () => {
-                document.body.style.overflow = ''; // Re-enable scrolling
-            });
-
+            // Handle input events
             input.addEventListener('input', (e) => updateValue(e.target.value));
             
             // Improved touch handling for range inputs
@@ -530,13 +530,6 @@ class PerlinVisualizer {
 
 // Initialize the visualizer when the page loads
 window.addEventListener('load', () => {
-    // Prevent scrolling on iOS Safari
-    document.ontouchmove = (e) => {
-        if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('container')) {
-            e.preventDefault();
-        }
-    };
-    
     // Fix for iOS Safari viewport issues
     const fixViewportHeight = () => {
         const vh = window.innerHeight * 0.01;
@@ -546,5 +539,6 @@ window.addEventListener('load', () => {
     fixViewportHeight();
     window.addEventListener('resize', fixViewportHeight);
     
+    // Initialize the visualizer
     new PerlinVisualizer();
 });
