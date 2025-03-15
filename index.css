@@ -19,6 +19,11 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 * {
@@ -26,6 +31,7 @@ html, body {
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+    touch-action: manipulation; /* Improve touch behavior */
 }
 
 body {
@@ -38,6 +44,9 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .container {
@@ -48,6 +57,9 @@ body {
     box-shadow: var(--shadow);
     padding: var(--spacing-md);
     overflow-x: hidden;
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .preview-container {
@@ -141,6 +153,7 @@ input[type="range"] {
     height: 4px;
     -webkit-appearance: none;
     cursor: pointer;
+    touch-action: none; /* Prevent scrolling when adjusting sliders */
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -302,39 +315,52 @@ input[type="text"]:focus, select:focus {
     }
 
     input[type="range"]::-webkit-slider-thumb {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
     }
 
     input[type="range"]::-moz-range-thumb {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
     }
 
     .canvas-container, .game-preview {
         padding: var(--spacing-sm);
         min-width: 200px;
+        touch-action: none; /* Prevent scrolling on canvas containers */
     }
 
     canvas {
         height: 200px;
+        touch-action: none; /* Prevent scrolling on canvases */
     }
 }
 
 /* Touch device optimizations */
 @media (hover: none) {
     input[type="range"]::-webkit-slider-thumb {
-        width: 24px;
-        height: 24px;
+        width: 28px; /* Even larger for touch devices */
+        height: 28px;
     }
 
     .legend-toggle {
-        padding: 10px 0;
+        padding: 12px 0;
+        min-height: 44px;
     }
 
     select, input[type="text"] {
         font-size: 16px;
         padding: 12px;
+        height: 44px; /* Minimum touch target size */
+    }
+    
+    .control-group {
+        margin-bottom: 16px;
+    }
+    
+    /* Prevent zoom on focus */
+    input, select, button {
+        font-size: 16px !important;
     }
 }
 
@@ -363,6 +389,8 @@ input[type="range"]::-moz-range-thumb {
     border-radius: var(--border-radius);
     overflow: hidden;
     max-width: 100%;
+    height: 100%;
+    position: relative;
 }
 
 /* Focus styles for accessibility */

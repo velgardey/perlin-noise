@@ -151,10 +151,32 @@ class PerlinVisualizer {
         this.noiseGrid = [];
         this.currentSeed = Math.random() * 65536;
         
+        // Prevent scrolling on the entire document for embedded views
+        this.preventDocumentScrolling();
+        
         this.setupControls();
         this.setupCanvas();
         this.setupTouchHandling();
         this.generate(true); // true = initialize with new seed
+    }
+
+    preventDocumentScrolling() {
+        // Prevent scrolling on touch devices
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('container')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Prevent scrolling with mouse wheel
+        document.addEventListener('wheel', (e) => {
+            if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('container')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Prevent pull-to-refresh on mobile
+        document.body.style.overscrollBehavior = 'none';
     }
 
     setupCanvas() {
@@ -183,7 +205,7 @@ class PerlinVisualizer {
     }
 
     setupTouchHandling() {
-        // Prevent default touch behaviors
+        // Prevent default touch behaviors on canvases
         this.perlinCanvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
         this.gameCanvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
         
@@ -192,6 +214,26 @@ class PerlinVisualizer {
             canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
             canvas.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
         });
+        
+        // Prevent scrolling when interacting with range inputs
+        const rangeInputs = document.querySelectorAll('input[type="range"]');
+        rangeInputs.forEach(input => {
+            input.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            }, { passive: false });
+            
+            input.addEventListener('touchmove', (e) => {
+                e.stopPropagation();
+            }, { passive: false });
+        });
+        
+        // Improve touch handling for the legend toggle
+        const legendToggle = document.querySelector('.legend-toggle');
+        if (legendToggle) {
+            legendToggle.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            }, { passive: false });
+        }
     }
 
     setupControls() {
@@ -210,7 +252,7 @@ class PerlinVisualizer {
         document.getElementById('lacunarityValue').textContent = this.lacunarity.toFixed(1);
         document.getElementById('thresholdValue').textContent = this.threshold.toFixed(2);
 
-        // Setup event listeners with touch support
+        // Setup event listeners with improved touch support
         const setupRangeInput = (id, suffix = '', multiplier = 1) => {
             const input = document.getElementById(id);
             const valueDisplay = document.getElementById(id + 'Value');
@@ -241,11 +283,16 @@ class PerlinVisualizer {
                 this.generate(); // Generate on every change
             };
 
-            // Prevent text selection during touch
+            // Prevent text selection and scrolling during touch
             input.addEventListener('touchstart', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
+                document.body.style.overflow = 'hidden'; // Disable scrolling
             }, { passive: false });
+            
+            input.addEventListener('touchend', () => {
+                document.body.style.overflow = ''; // Re-enable scrolling
+            });
 
             input.addEventListener('input', (e) => updateValue(e.target.value));
             
@@ -256,7 +303,12 @@ class PerlinVisualizer {
                 const rect = input.getBoundingClientRect();
                 const value = ((touch.clientX - rect.left) / rect.width) * 
                     (parseInt(input.max) - parseInt(input.min)) + parseInt(input.min);
-                input.value = Math.round(value);
+                
+                // Clamp value to min/max range
+                const clampedValue = Math.max(parseInt(input.min), 
+                                     Math.min(parseInt(input.max), Math.round(value)));
+                
+                input.value = clampedValue;
                 updateValue(input.value);
             }, { passive: false });
         };
@@ -478,5 +530,21 @@ class PerlinVisualizer {
 
 // Initialize the visualizer when the page loads
 window.addEventListener('load', () => {
+    // Prevent scrolling on iOS Safari
+    document.ontouchmove = (e) => {
+        if (e.target.tagName !== 'INPUT' && !e.target.classList.contains('container')) {
+            e.preventDefault();
+        }
+    };
+    
+    // Fix for iOS Safari viewport issues
+    const fixViewportHeight = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    fixViewportHeight();
+    window.addEventListener('resize', fixViewportHeight);
+    
     new PerlinVisualizer();
 });
