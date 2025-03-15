@@ -166,9 +166,8 @@ class PerlinVisualizer {
         
         // Prevent default touch behaviors except on the container
         document.addEventListener('touchmove', (e) => {
-            // Allow scrolling only within the container
-            if (!container.contains(e.target) || e.target.tagName === 'CANVAS' || 
-                e.target.type === 'range') {
+            // Allow scrolling on the container and its children
+            if (!container.contains(e.target) || e.target.type === 'range') {
                 e.preventDefault();
             }
         }, { passive: false });
@@ -180,9 +179,7 @@ class PerlinVisualizer {
         if (container) {
             container.addEventListener('touchstart', (e) => {
                 // Don't prevent default on container to allow scrolling
-                if (e.target === container) {
-                    return true;
-                }
+                return true;
             }, { passive: true });
         }
     }
@@ -213,14 +210,44 @@ class PerlinVisualizer {
     }
 
     setupTouchHandling() {
-        // Prevent default touch behaviors on canvases
-        this.perlinCanvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-        this.gameCanvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+        // Track touch start position to determine if it's a tap or scroll
+        let touchStartY = 0;
+        let isTap = false;
         
-        // Add touch event listeners for both canvases
+        // Handle canvas touch events to allow scrolling
         [this.perlinCanvas, this.gameCanvas].forEach(canvas => {
-            canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
-            canvas.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
+            // On touch start, record position
+            canvas.addEventListener('touchstart', (e) => {
+                touchStartY = e.touches[0].clientY;
+                isTap = true;
+                // Don't prevent default to allow scrolling
+            }, { passive: true });
+            
+            // On touch move, determine if it's a scroll or interaction
+            canvas.addEventListener('touchmove', (e) => {
+                const touchY = e.touches[0].clientY;
+                const deltaY = Math.abs(touchY - touchStartY);
+                
+                // If vertical movement is significant, it's a scroll
+                if (deltaY > 10) {
+                    isTap = false;
+                    // Don't prevent default to allow scrolling
+                    return true;
+                } else {
+                    // It's likely an interaction with the canvas, prevent default
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            // On touch end, handle tap if it was a tap
+            canvas.addEventListener('touchend', (e) => {
+                if (isTap) {
+                    // It was a tap, prevent default to avoid unwanted actions
+                    e.preventDefault();
+                }
+                // Reset tap state
+                isTap = false;
+            }, { passive: false });
         });
         
         // Prevent scrolling when interacting with range inputs

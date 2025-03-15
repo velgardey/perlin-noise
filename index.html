@@ -23,6 +23,12 @@
         .container {
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+        }
+        
+        /* Ensure canvas elements allow scrolling */
+        canvas {
+            touch-action: pan-y;
         }
     </style>
 </head>
@@ -143,6 +149,23 @@
             icon.textContent = isExpanded ? '▼' : '▲';
             button.setAttribute('aria-expanded', !isExpanded);
         }
+        
+        // Fix for iOS scrolling issues
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure container is scrollable
+            const container = document.querySelector('.container');
+            if (container) {
+                // Force iOS to recognize this element as scrollable
+                container.style.webkitOverflowScrolling = 'touch';
+                container.style.overflowY = 'auto';
+            }
+            
+            // Ensure canvas elements don't block scrolling
+            const canvases = document.querySelectorAll('canvas');
+            canvases.forEach(canvas => {
+                canvas.style.touchAction = 'pan-y';
+            });
+        });
     </script>
 </body>
 </html>

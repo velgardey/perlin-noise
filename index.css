@@ -110,7 +110,7 @@ canvas {
     background-color: var(--bg-primary);
     border-radius: 4px;
     border: 1px solid var(--border-color);
-    touch-action: none; /* Prevent scrolling on canvases */
+    touch-action: pan-y; /* Allow vertical scrolling on canvases */
 }
 
 .controls {
