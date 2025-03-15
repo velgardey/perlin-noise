@@ -1,9 +1,9 @@
 :root {
     --bg-color: #1a1a1a;
     --text-color: #e0e0e0;
-    --primary-color: #4a9eff;
+    --primary-color: #ff8c00;
     --secondary-color: #2a2a2a;
-    --accent-color: #6b4fbb;
+    --accent-color: #e65c00;
 }
 
 /* Add styles for iframe embedding */
@@ -171,7 +171,7 @@ button {
 }
 
 button:hover {
-    background-color: #7b5fd0;
+    background-color: #ff9e2c;
 }
 
 .action-button {
@@ -183,7 +183,7 @@ button:hover {
 }
 
 .action-button:hover {
-    background-color: #3a8eff;
+    background-color: #ff6a00;
 }
 
 .legend {

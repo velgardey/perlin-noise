@@ -283,15 +283,6 @@ class PerlinVisualizer {
                 this.draw();
             }, 250); // Debounce resize events
         });
-
-        // Add event listener for new seed button if it exists
-        const newSeedBtn = document.getElementById('newSeed');
-        if (newSeedBtn) {
-            newSeedBtn.addEventListener('click', () => {
-                this.currentSeed = Math.random() * 65536;
-                this.generate(true);
-            });
-        }
     }
 
     generate(newSeed = false) {
