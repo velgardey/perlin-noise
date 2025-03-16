@@ -300,8 +300,10 @@ class PerlinVisualizer {
                 
                 switch(id) {
                     case 'persistence':
-                        displayValue = (numValue / 100).toFixed(2);
-                        this.persistence = numValue / 100;
+                        // Convert to float with 2 decimal places for smoother transitions
+                        const persistenceValue = numValue / 100;
+                        displayValue = persistenceValue.toFixed(2);
+                        this.persistence = persistenceValue;
                         break;
                     case 'lacunarity':
                         displayValue = (numValue / 10).toFixed(1);
@@ -317,7 +319,13 @@ class PerlinVisualizer {
                 }
                 
                 valueDisplay.textContent = displayValue + suffix;
-                this.generate(); // Generate on every change
+                
+                // For persistence slider, use debounced generation to avoid too many updates
+                if (id === 'persistence') {
+                    this.debouncedGenerate();
+                } else {
+                    this.generate(); // Generate on every change for other sliders
+                }
             };
 
             // Handle input events
@@ -347,6 +355,11 @@ class PerlinVisualizer {
         setupRangeInput('lacunarity', '', 10);
         setupRangeInput('threshold', '', 100);
 
+        // Create a debounced version of generate for smoother slider interaction
+        this.debouncedGenerate = this.debounce(() => {
+            this.generate();
+        }, 50); // 50ms debounce time
+
         // Handle window resize with debounce
         let resizeTimeout;
         window.addEventListener('resize', () => {
@@ -356,6 +369,19 @@ class PerlinVisualizer {
                 this.draw();
             }, 250); // Debounce resize events
         });
+    }
+
+    // Debounce helper function to limit how often a function is called
+    debounce(func, wait) {
+        let timeout;
+        return function() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                func.apply(context, args);
+            }, wait);
+        };
     }
 
     generate(newSeed = false) {
@@ -410,9 +436,6 @@ class PerlinVisualizer {
         // Calculate cell size based on canvas dimensions
         const perlinCellWidth = this.perlinCanvas.width / this.gridSize / (window.devicePixelRatio || 1);
         const perlinCellHeight = this.perlinCanvas.height / this.gridSize / (window.devicePixelRatio || 1);
-        
-        const gameCellWidth = this.gameCanvas.width / this.gridSize / (window.devicePixelRatio || 1);
-        const gameCellHeight = this.gameCanvas.height / this.gridSize / (window.devicePixelRatio || 1);
 
         // Draw Perlin noise grid
         for (let y = 0; y < this.gridSize; y++) {
@@ -452,106 +475,256 @@ class PerlinVisualizer {
             }
         }
 
-        // Draw game-level visualization with perspective
-        const perspective = 0.7;
-        const wallHeight = gameCellHeight * 2;
-        const floorColor = '#1a1a1a';
-        const wallColor = '#1a1a1a';
-        const highlightColor = 'rgba(255, 255, 255, 0.1)';
-        const shadowColor = 'rgba(0, 0, 0, 0.3)';
+        // Draw isometric game-level visualization
+        this.drawIsometricGameView();
+    }
 
-        // Draw floor
-        this.gameCtx.fillStyle = floorColor;
-        this.gameCtx.fillRect(0, 0, this.gameCanvas.width / (window.devicePixelRatio || 1), this.gameCanvas.height / (window.devicePixelRatio || 1));
-
-        // Draw walls and floor tiles
-        for (let y = 0; y < this.gridSize; y++) {
-            for (let x = 0; x < this.gridSize; x++) {
-                const value = this.noiseGrid[y][x];
-                const normalizedValue = (value + 1) / 2;
-                const isSolid = normalizedValue < (0.5 + this.threshold);
-                
-                const screenX = x * gameCellWidth;
-                const screenY = y * gameCellHeight;
-
-                if (isSolid) {
-                    // Calculate wall color based on depth
-                    const depthIntensity = normalizedValue * 2; // 0 to 1 range
-                    const wallR = Math.floor(26 + depthIntensity * 20);
-                    const wallG = Math.floor(26 + depthIntensity * 40);
-                    const wallB = Math.floor(80 + depthIntensity * 175);
-                    const wallColor = `rgb(${wallR}, ${wallG}, ${wallB})`;
-
-                    // Draw wall
-                    this.gameCtx.fillStyle = wallColor;
-                    this.gameCtx.fillRect(
-                        screenX,
-                        screenY - wallHeight * perspective,
-                        gameCellWidth,
-                        wallHeight
-                    );
-
-                    // Add wall highlights
-                    this.gameCtx.fillStyle = highlightColor;
-                    this.gameCtx.fillRect(
-                        screenX,
-                        screenY - wallHeight * perspective,
-                        gameCellWidth,
-                        2
-                    );
-                    this.gameCtx.fillRect(
-                        screenX,
-                        screenY - wallHeight * perspective,
-                        2,
-                        wallHeight
-                    );
-
-                    // Add wall shadows
-                    this.gameCtx.fillStyle = shadowColor;
-                    this.gameCtx.fillRect(
-                        screenX + gameCellWidth - 2,
-                        screenY - wallHeight * perspective,
-                        2,
-                        wallHeight
-                    );
-                    this.gameCtx.fillRect(
-                        screenX,
-                        screenY - wallHeight * perspective + wallHeight - 2,
-                        gameCellWidth,
-                        2
-                    );
-                }
-
-                // Draw floor tile with intensity based on noise value
-                const floorIntensity = normalizedValue;
-                this.gameCtx.fillStyle = isSolid ? 
-                    shadowColor : 
-                    `rgba(255, 255, 255, ${0.05 + floorIntensity * 0.1})`;
-                this.gameCtx.fillRect(
-                    screenX,
-                    screenY,
-                    gameCellWidth,
-                    gameCellHeight
-                );
-            }
-        }
-
-        // Add ambient lighting effect
+    drawIsometricGameView() {
         const canvasWidth = this.gameCanvas.width / (window.devicePixelRatio || 1);
         const canvasHeight = this.gameCanvas.height / (window.devicePixelRatio || 1);
         
-        const gradient = this.gameCtx.createRadialGradient(
-            canvasWidth / 2,
-            canvasHeight / 2,
-            0,
-            canvasWidth / 2,
-            canvasHeight / 2,
-            canvasWidth / 2
-        );
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
-        this.gameCtx.fillStyle = gradient;
+        // Set background gradient (sky)
+        const skyGradient = this.gameCtx.createLinearGradient(0, 0, 0, canvasHeight);
+        skyGradient.addColorStop(0, '#1a1a2a'); // Dark blue at top
+        skyGradient.addColorStop(1, '#3a3a5a'); // Lighter blue at bottom
+        this.gameCtx.fillStyle = skyGradient;
         this.gameCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+        
+        // Isometric projection parameters
+        const tileWidth = 20;  // Base tile width
+        const tileHeight = 10; // Base tile height
+        const heightScale = 15; // Height scaling factor
+        
+        // Calculate grid size for isometric view (use fewer cells for performance)
+        const isoGridSize = Math.min(20, this.gridSize);
+        const scaleFactor = this.gridSize / isoGridSize;
+        
+        // Calculate starting position to center the isometric grid
+        const startX = canvasWidth / 2;
+        const startY = canvasHeight / 4;
+        
+        // Draw tiles from back to front (painter's algorithm)
+        for (let y = 0; y < isoGridSize; y++) {
+            for (let x = 0; x < isoGridSize; x++) {
+                // Sample from the noise grid (with scaling)
+                const sampleX = Math.floor(x * scaleFactor);
+                const sampleY = Math.floor(y * scaleFactor);
+                
+                if (sampleX >= this.gridSize || sampleY >= this.gridSize) continue;
+                
+                const value = this.noiseGrid[sampleY][sampleX];
+                const normalizedValue = (value + 1) / 2;
+                
+                // Determine tile type based on threshold
+                const isSolid = normalizedValue < (0.5 + this.threshold);
+                
+                // Calculate isometric position
+                const isoX = startX + (x - y) * tileWidth;
+                const height = Math.floor(normalizedValue * heightScale);
+                const isoY = startY + (x + y) * tileHeight / 2 - height;
+                
+                // Draw the tile based on its type
+                this.drawIsometricTile(isoX, isoY, tileWidth, tileHeight, height, normalizedValue, isSolid);
+            }
+        }
+        
+        // Add atmospheric effects
+        this.addAtmosphericEffects(canvasWidth, canvasHeight);
+    }
+
+    drawIsometricTile(x, y, width, height, tileHeight, normalizedValue, isWater) {
+        // Colors for different tile types
+        const waterColor = `rgb(0, ${Math.floor(100 + normalizedValue * 100)}, ${Math.floor(150 + normalizedValue * 100)})`;
+        
+        // Use persistence to influence land color variation - higher persistence = more varied terrain
+        const variationFactor = Math.min(1, this.persistence * 2); // Scale up the effect
+        const landColor = `rgb(
+            ${Math.floor(50 + normalizedValue * 100 + (Math.random() * 20 - 10) * variationFactor)}, 
+            ${Math.floor(100 + normalizedValue * 100 + (Math.random() * 20 - 10) * variationFactor)}, 
+            ${Math.floor(normalizedValue * 50 + (Math.random() * 10 - 5) * variationFactor)}
+        )`;
+        
+        const snowThreshold = 0.8;
+        
+        // Determine tile color based on height and type
+        let topColor, leftColor, rightColor;
+        
+        if (isWater) {
+            // Water tiles
+            topColor = waterColor;
+            leftColor = this.adjustBrightness(waterColor, -20);
+            rightColor = this.adjustBrightness(waterColor, -40);
+        } else {
+            // Land tiles
+            if (normalizedValue > snowThreshold) {
+                // Snow-capped mountains
+                topColor = '#ffffff';
+            } else {
+                // Regular land
+                topColor = landColor;
+            }
+            
+            leftColor = this.adjustBrightness(topColor, -20);
+            rightColor = this.adjustBrightness(topColor, -40);
+        }
+        
+        // Draw right face (darker)
+        this.gameCtx.fillStyle = rightColor;
+        this.gameCtx.beginPath();
+        this.gameCtx.moveTo(x, y);
+        this.gameCtx.lineTo(x + width, y + height / 2);
+        this.gameCtx.lineTo(x + width, y + height / 2 + tileHeight);
+        this.gameCtx.lineTo(x, y + tileHeight);
+        this.gameCtx.closePath();
+        this.gameCtx.fill();
+        
+        // Draw left face (medium)
+        this.gameCtx.fillStyle = leftColor;
+        this.gameCtx.beginPath();
+        this.gameCtx.moveTo(x, y);
+        this.gameCtx.lineTo(x - width, y + height / 2);
+        this.gameCtx.lineTo(x - width, y + height / 2 + tileHeight);
+        this.gameCtx.lineTo(x, y + tileHeight);
+        this.gameCtx.closePath();
+        this.gameCtx.fill();
+        
+        // Draw top face
+        this.gameCtx.fillStyle = topColor;
+        this.gameCtx.beginPath();
+        this.gameCtx.moveTo(x, y);
+        this.gameCtx.lineTo(x - width, y + height / 2);
+        this.gameCtx.lineTo(x, y + height);
+        this.gameCtx.lineTo(x + width, y + height / 2);
+        this.gameCtx.closePath();
+        this.gameCtx.fill();
+        
+        // Add details based on tile type and persistence
+        if (!isWater) {
+            // Higher persistence = more features
+            const featureProbability = 0.3 + this.persistence * 0.5; // Scale with persistence
+            
+            if (normalizedValue > 0.6 && normalizedValue < snowThreshold) {
+                // Add trees to higher land based on persistence
+                if (Math.random() > (1 - featureProbability)) {
+                    this.drawTree(x, y - 5, normalizedValue);
+                }
+            } else if (normalizedValue > 0.4 && normalizedValue <= 0.6) {
+                // Add grass/bushes to mid-elevation land
+                if (Math.random() > (1 - featureProbability * 0.7)) {
+                    this.drawBush(x, y - 2, normalizedValue);
+                }
+            }
+        }
+    }
+
+    drawTree(x, y, normalizedValue) {
+        // Tree trunk
+        this.gameCtx.fillStyle = '#8B4513';
+        this.gameCtx.fillRect(x - 1, y - 8, 2, 8);
+        
+        // Tree foliage - more varied with higher persistence
+        const variationFactor = Math.min(1, this.persistence * 2);
+        const greenBase = Math.floor(100 + normalizedValue * 100);
+        const greenVariation = Math.floor((Math.random() * 30 - 15) * variationFactor);
+        const greenIntensity = Math.max(80, Math.min(200, greenBase + greenVariation));
+        
+        this.gameCtx.fillStyle = `rgb(0, ${greenIntensity}, 0)`;
+        
+        // Draw triangular foliage with slight randomness based on persistence
+        const heightVariation = Math.floor(Math.random() * 5 * variationFactor);
+        const widthVariation = Math.floor(Math.random() * 3 * variationFactor);
+        
+        this.gameCtx.beginPath();
+        this.gameCtx.moveTo(x, y - (20 + heightVariation));
+        this.gameCtx.lineTo(x - (6 + widthVariation), y - 8);
+        this.gameCtx.lineTo(x + (6 + widthVariation), y - 8);
+        this.gameCtx.closePath();
+        this.gameCtx.fill();
+    }
+
+    drawBush(x, y, normalizedValue) {
+        // Bush/grass color based on normalized value and persistence
+        const greenIntensity = Math.floor(80 + normalizedValue * 120);
+        const variationFactor = Math.min(1, this.persistence * 2);
+        const redComponent = Math.floor(20 + Math.random() * 30 * variationFactor);
+        
+        this.gameCtx.fillStyle = `rgb(${redComponent}, ${greenIntensity}, 20)`;
+        
+        // Draw small bush/grass clump
+        this.gameCtx.beginPath();
+        this.gameCtx.arc(x, y - 3, 3 + Math.random() * 2, 0, Math.PI * 2);
+        this.gameCtx.fill();
+    }
+
+    addAtmosphericEffects(width, height) {
+        // Add sun or moon
+        const centerX = width * 0.8;
+        const centerY = height * 0.2;
+        const radius = 15;
+        
+        // Sun glow
+        const sunGradient = this.gameCtx.createRadialGradient(
+            centerX, centerY, 0,
+            centerX, centerY, radius * 2
+        );
+        sunGradient.addColorStop(0, 'rgba(255, 255, 200, 0.8)');
+        sunGradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.2)');
+        sunGradient.addColorStop(1, 'rgba(255, 150, 50, 0)');
+        
+        this.gameCtx.fillStyle = sunGradient;
+        this.gameCtx.beginPath();
+        this.gameCtx.arc(centerX, centerY, radius * 2, 0, Math.PI * 2);
+        this.gameCtx.fill();
+        
+        // Sun/moon
+        this.gameCtx.fillStyle = '#ffffa0';
+        this.gameCtx.beginPath();
+        this.gameCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        this.gameCtx.fill();
+        
+        // Add fog/mist over water areas
+        this.gameCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        this.gameCtx.fillRect(0, height * 0.6, width, height * 0.4);
+        
+        // Add vignette effect
+        const vignetteGradient = this.gameCtx.createRadialGradient(
+            width / 2, height / 2, 0,
+            width / 2, height / 2, width / 1.5
+        );
+        vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        vignetteGradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+        
+        this.gameCtx.fillStyle = vignetteGradient;
+        this.gameCtx.fillRect(0, 0, width, height);
+    }
+
+    // Helper function to adjust color brightness
+    adjustBrightness(color, percent) {
+        if (color.startsWith('#')) {
+            // Convert hex to RGB
+            const r = parseInt(color.substr(1, 2), 16);
+            const g = parseInt(color.substr(3, 2), 16);
+            const b = parseInt(color.substr(5, 2), 16);
+            return this.adjustRgbBrightness(r, g, b, percent);
+        } else if (color.startsWith('rgb')) {
+            // Parse RGB format
+            const match = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+            if (match) {
+                const r = parseInt(match[1]);
+                const g = parseInt(match[2]);
+                const b = parseInt(match[3]);
+                return this.adjustRgbBrightness(r, g, b, percent);
+            }
+        }
+        return color;
+    }
+
+    adjustRgbBrightness(r, g, b, percent) {
+        // Adjust RGB values by percentage
+        r = Math.max(0, Math.min(255, r + percent));
+        g = Math.max(0, Math.min(255, g + percent));
+        b = Math.max(0, Math.min(255, b + percent));
+        return `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
     }
 }
 

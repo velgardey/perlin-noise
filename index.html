@@ -39,8 +39,8 @@
                 <canvas id="perlinCanvas" role="img" aria-label="Generated perlin noise pattern"></canvas>
             </div>
             <div class="game-preview">
-                <h3>Game Level Preview</h3>
-                <canvas id="gameCanvas" role="img" aria-label="Game level visualization"></canvas>
+                <h3>Isometric World View</h3>
+                <canvas id="gameCanvas" role="img" aria-label="Isometric game world visualization"></canvas>
             </div>
         </div>
         <div class="controls" role="form" aria-label="Pattern Controls">
@@ -64,7 +64,7 @@
                 </div>
                 <div class="control-group">
                     <label for="persistence">Detail:</label>
-                    <input type="range" id="persistence" min="10" max="90" value="50" aria-label="Detail level">
+                    <input type="range" id="persistence" min="1" max="99" value="50" step="1" aria-label="Detail level">
                     <span id="persistenceValue" aria-live="polite">0.50</span>
                 </div>
             </div>
@@ -113,7 +113,7 @@
                         <span class="dot" aria-hidden="true"></span>
                         <div class="legend-content">
                             <strong>Detail:</strong>
-                            <p>Controls how much each octave contributes to the final result (persistence). Higher values create more detailed, rougher terrain.</p>
+                            <p>Controls how much each octave contributes to the final result (persistence). Higher values create more detailed, rougher terrain with greater variation in colors and more vegetation. Lower values create smoother, more uniform terrain.</p>
                         </div>
                     </div>
                     <div class="legend-item">
